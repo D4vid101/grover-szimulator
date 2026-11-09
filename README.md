@@ -1,6 +1,6 @@
 # Grover-szimulátor
 
-Kvantuminformatikai alkalmazások, 2026 ősz · 3. feladat
+A Kvantuminformatikai alkalmazások tantárgy 2026. őszi házi feladatának beadása (3. feladat).
 
 Szélyes Dávid és [tamas722](https://github.com/tamas722)
 
