@@ -8,9 +8,9 @@ A program a Grover-algoritmus egyetlen megjelölt állapotra vonatkozó esetét 
 
 ## Futtatás
 
-- Windows x64: a [Releases](../../releases) oldalról töltsd le a `GroverSzimulator.exe` fájlt, majd indítsd el. Python és internet nem szükséges a futtatáshoz.
-- Forrásból: Python 3.10+ és Tk szükséges. A projekt gyökérmappájában futtasd: `python app.py`.
-- Windows csomag újraépítése Python 3.12-vel: `python -m pip install PyInstaller==6.22.3`, majd `python -m PyInstaller --onefile --windowed --name GroverSzimulator app.py`. A fájl a `dist` mappába kerül.
+- Windows: töltsd le a [legfrissebb beadási ZIP-et](../../releases/latest), csomagold ki, és nyisd meg a `GroverSzimulator.html` fájlt a böngészőben. A fájl önállóan, internetkapcsolat és telepítés nélkül fut.
+- A böngészős változat újraépítése: Python 3.10+ alatt futtasd a `python build_browser.py` parancsot. A program a `grover.py` eredményeit beépíti a `browser-template.html` sablonba.
+- Asztali fejlesztői nézet: Python 3.10+ és Tk szükséges. A projekt gyökérmappájában futtasd: `python app.py`.
 
 ## Első próba
 

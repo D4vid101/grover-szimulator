@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grover-szimulátor</title>
+<style>
+:root{color-scheme:dark;--bg:#0f172a;--panel:#17243a;--grid:#33445f;--ink:#f0f5ff;--muted:#afc0d8;--blue:#79abff;--gold:#ffc775;--mint:#64e4bf}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px system-ui,sans-serif}
+main{max-width:1220px;margin:auto;padding:clamp(16px,4vw,42px)}
+h1{font-size:clamp(2rem,5vw,3.3rem);letter-spacing:-.04em;margin:3px 0}
+p{margin:6px 0;color:var(--muted)}
+.eyebrow{color:var(--mint);font-size:.75rem;font-weight:750;letter-spacing:.11em}
+form,nav{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-top:20px}
+label{display:grid;gap:5px;color:var(--muted);font-size:.85rem}
+input,button{font:inherit;border:1px solid #526586;border-radius:7px;padding:7px 10px;background:#22324b;color:var(--ink)}
+input{width:80px}
+button{cursor:pointer}
+button:hover:not(:disabled){border-color:var(--mint)}
+button:disabled{opacity:.45;cursor:default}
+button.primary{background:#236454;border-color:#428b79}
+#status{color:#ffa0a8;margin:8px 0}
+#status:empty{display:none}
+nav{align-items:center;margin-bottom:12px}
+#step{font-weight:700;margin-left:4px}
+#probability{margin-left:auto;color:var(--mint);font-weight:700}
+.plots{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:12px}
+section{background:var(--panel);border:1px solid var(--grid);border-radius:12px;padding:14px}
+h2{margin:0;font-size:1.03rem}
+small{color:var(--muted)}
+svg{display:block;width:100%;height:auto}
+svg text{font:13px system-ui,sans-serif;fill:var(--muted)}
+#coordinates{color:var(--mint);font-variant-numeric:tabular-nums}
+#explanation{margin-top:13px}
+@media(max-width:760px){.plots{grid-template-columns:1fr}#probability{margin-left:0}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="eyebrow">KVANTUMINFORMATIKAI ALKALMAZÁSOK / 3. FELADAT</div>
+  <h1>Grover-szimulátor</h1>
+  <p>Kövesd ugyanazt a kvantumállapotot az amplitúdók és a geometria nézetében.</p>
+</header>
+<form id="settings" novalidate>
+  <label>Qubitek<input id="qubits" type="number" min="1" max="8" value="2" required></label>
+  <label>Célindex<input id="target" type="number" min="0" max="3" value="2" required></label>
+  <label>Iterációk<input id="iterations" type="number" min="0" max="40" value="1" required></label>
+  <button id="suggest" type="button">Ajánlott iteráció</button>
+  <button class="primary" type="submit">Új futás</button>
+</form>
+<p id="status" role="alert"></p>
+<nav aria-label="Lépések">
+  <button id="previous" type="button">← Előző</button>
+  <button id="next" type="button">Következő →</button>
+  <span id="step" aria-live="polite"></span>
+  <span id="probability"></span>
+</nav>
+<div class="plots">
+  <section>
+    <h2>01 &nbsp; Valószínűségi amplitúdók</h2>
+    <small id="legend"></small>
+    <svg id="bars" viewBox="0 0 560 330" role="img" aria-label="Előjeles amplitúdók"></svg>
+    <small>Bázisállapot indexe · A fehér vonás az előző érték.</small>
+  </section>
+  <section>
+    <h2>02 &nbsp; Geometriai nézet</h2>
+    <small>x: nem célállapotok · y: célállapot</small>
+    <svg id="plane" viewBox="0 0 340 330" role="img" aria-label="Állapotvektor az egységkörön"></svg>
+    <small id="coordinates"></small>
+    <small> · Szaggatott nyíl: előző állapot.</small>
+  </section>
+</div>
+<p id="explanation"></p>
+</main>
+<script>
+"use strict";
+const datasets = __GROVER_DATA__;
+const labels = {
+  initial: ["Szuperpozíció", "Minden bázisállapot azonos amplitúdóról indul."],
+  oracle: ["Orákulum", "A cél amplitúdója előjelet vált. A mérési valószínűségek változatlanok."],
+  diffusion: ["Diffúzió", "Minden amplitúdó tükröződik az orákulum utáni amplitúdók átlaga körül."]
+};
+const byId = id => document.getElementById(id);
+const qubits = byId("qubits");
+const target = byId("target");
+const iterations = byId("iterations");
+const status = byId("status");
+const previous = byId("previous");
+const next = byId("next");
+let history, size, marked, position;
+
+function run() {
+  const n = qubits.valueAsNumber;
+  const index = target.valueAsNumber;
+  const count = iterations.valueAsNumber;
+  if (!Number.isInteger(n) || n < 1 || n > 8) {
+    status.textContent = "A qubitek száma 1 és 8 közötti egész legyen.";
+    return;
+  }
+  const nextSize = 2 ** n;
+  if (!Number.isInteger(index) || index < 0 || index >= nextSize) {
+    status.textContent = "A célindex 0 és " + (nextSize - 1) + " közötti egész legyen.";
+    return;
+  }
+  if (!Number.isInteger(count) || count < 0 || count > 40) {
+    status.textContent = "Az iterációk száma 0 és 40 közötti egész legyen.";
+    return;
+  }
+  size = nextSize;
+  marked = index;
+  history = datasets[n].steps.slice(0, 2 * count + 1);
+  position = 0;
+  status.textContent = "";
+  draw();
+}
+
+function move(delta) {
+  position = Math.max(0, Math.min(position + delta, history.length - 1));
+  draw();
+}
+
+function svgElement(parent, name, attributes, label) {
+  const element = document.createElementNS("http://www.w3.org/2000/svg", name);
+  for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, value);
+  if (label !== undefined) element.textContent = label;
+  parent.append(element);
+  return element;
+}
+
+function line(svg, x1, y1, x2, y2, stroke, options = {}) {
+  return svgElement(svg, "line", {x1, y1, x2, y2, stroke, ...options});
+}
+
+function text(svg, x, y, label, anchor = "middle") {
+  svgElement(svg, "text", {x, y, "text-anchor": anchor, "dominant-baseline": "middle"}, label);
+}
+
+function drawBars(step, prior) {
+  const svg = byId("bars");
+  svg.replaceChildren();
+  const midpoint = 152;
+  const scale = 123;
+  const left = 43;
+  const cell = 500 / size;
+  for (const tick of [-1, -.5, 0, .5, 1]) {
+    const y = midpoint - scale * tick;
+    line(svg, left, y, 543, y, tick === 0 ? "var(--muted)" : "var(--grid)");
+    text(svg, left - 7, y, tick, "end");
+  }
+  const barWidth = Math.min(52, cell * .72);
+  const stride = Math.max(1, Math.ceil(28 / cell));
+  for (let i = 0; i < size; i++) {
+    const center = left + (i + .5) * cell;
+    const amplitudeIndex = i === marked ? 3 : 2;
+    const value = step[amplitudeIndex];
+    const y = midpoint - scale * value;
+    const bar = svgElement(svg, "rect", {
+      x: center - barWidth / 2, y: Math.min(midpoint, y), width: barWidth,
+      height: Math.max(1, Math.abs(y - midpoint)), fill: i === marked ? "var(--gold)" : "var(--blue)"
+    });
+    svgElement(bar, "title", {}, "|" + i + "⟩: " + value.toFixed(6));
+    if (prior) {
+      const oldY = midpoint - scale * prior[amplitudeIndex];
+      line(svg, center - barWidth / 2, oldY, center + barWidth / 2, oldY, "var(--ink)");
+    }
+    if (i % stride === 0) text(svg, center, 299, i);
+  }
+}
+
+function drawPlane(step, prior) {
+  const svg = byId("plane");
+  svg.replaceChildren();
+  const cx = 170, cy = 152, radius = 122;
+  svgElement(svg, "circle", {cx, cy, r: radius, fill: "none", stroke: "var(--grid)", "stroke-width": 2});
+  line(svg, 36, cy, 304, cy, "var(--muted)");
+  line(svg, cx, 18, cx, 286, "var(--muted)");
+  text(svg, 315, cy, "x");
+  text(svg, cx + 9, 18, "y");
+  function vector(snapshot, color, width, dash) {
+    const x = cx + radius * snapshot[4];
+    const y = cy - radius * snapshot[5];
+    const angle = Math.atan2(y - cy, x - cx);
+    line(svg, cx, cy, x, y, color, {"stroke-width": width, "stroke-dasharray": dash});
+    const points = [[x, y], ...[-.45, .45].map(offset =>
+      [x - 13 * Math.cos(angle + offset), y - 13 * Math.sin(angle + offset)])];
+    svgElement(svg, "polygon", {points: points.map(point => point.join(",")).join(" "), fill: color});
+  }
+  if (prior) vector(prior, "var(--muted)", 2, "5 4");
+  vector(step, "var(--mint)", 3, "none");
+  byId("coordinates").textContent = "x = " + step[4].toFixed(4) + " · y = " + step[5].toFixed(4);
+}
+
+function draw() {
+  const step = history[position];
+  const prior = history[position - 1];
+  const [name, description] = labels[step[0]];
+  byId("step").textContent = (position + 1) + "/" + history.length + "  " + name +
+    (step[1] ? " · " + step[1] + ". iteráció" : "");
+  byId("probability").textContent = "P(cél) = " + (100 * step[3] ** 2).toFixed(2) + "%";
+  byId("explanation").textContent = description;
+  byId("legend").textContent = "N = " + size + " · Arany: cél |" + marked + "⟩";
+  previous.disabled = position === 0;
+  next.disabled = position === history.length - 1;
+  drawBars(step, prior);
+  drawPlane(step, prior);
+}
+
+byId("settings").addEventListener("submit", event => { event.preventDefault(); run(); });
+qubits.addEventListener("input", () => {
+  const n = qubits.valueAsNumber;
+  if (datasets[n]) target.max = 2 ** n - 1;
+});
+byId("suggest").addEventListener("click", () => {
+  const data = datasets[qubits.valueAsNumber];
+  if (data) {
+    iterations.value = data.recommended;
+    status.textContent = "";
+  } else {
+    status.textContent = "Az ajánláshoz 1 és 8 közötti qubitszámot adj meg.";
+  }
+});
+previous.addEventListener("click", () => move(-1));
+next.addEventListener("click", () => move(1));
+document.addEventListener("keydown", event => {
+  if (event.target instanceof HTMLInputElement) return;
+  if (event.key === "ArrowLeft") move(-1);
+  if (event.key === "ArrowRight") move(1);
+});
+run();
+</script>
+</body>
+</html>
