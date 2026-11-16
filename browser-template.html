@@ -5,228 +5,618 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Grover-szimulátor</title>
 <style>
-:root{color-scheme:dark;--bg:#0f172a;--panel:#17243a;--grid:#33445f;--ink:#f0f5ff;--muted:#afc0d8;--blue:#79abff;--gold:#ffc775;--mint:#64e4bf}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px system-ui,sans-serif}
-main{max-width:1220px;margin:auto;padding:clamp(16px,4vw,42px)}
-h1{font-size:clamp(2rem,5vw,3.3rem);letter-spacing:-.04em;margin:3px 0}
-p{margin:6px 0;color:var(--muted)}
-.eyebrow{color:var(--mint);font-size:.75rem;font-weight:750;letter-spacing:.11em}
-form,nav{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-top:20px}
-label{display:grid;gap:5px;color:var(--muted);font-size:.85rem}
-input,button{font:inherit;border:1px solid #526586;border-radius:7px;padding:7px 10px;background:#22324b;color:var(--ink)}
-input{width:80px}
-button{cursor:pointer}
-button:hover:not(:disabled){border-color:var(--mint)}
-button:disabled{opacity:.45;cursor:default}
-button.primary{background:#236454;border-color:#428b79}
-#status{color:#ffa0a8;margin:8px 0}
-#status:empty{display:none}
-nav{align-items:center;margin-bottom:12px}
-#step{font-weight:700;margin-left:4px}
-#probability{margin-left:auto;color:var(--mint);font-weight:700}
-.plots{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:12px}
-section{background:var(--panel);border:1px solid var(--grid);border-radius:12px;padding:14px}
-h2{margin:0;font-size:1.03rem}
-small{color:var(--muted)}
-svg{display:block;width:100%;height:auto}
-svg text{font:13px system-ui,sans-serif;fill:var(--muted)}
-#coordinates{color:var(--mint);font-variant-numeric:tabular-nums}
-#explanation{margin-top:13px}
-@media(max-width:760px){.plots{grid-template-columns:1fr}#probability{margin-left:0}}
+:root {
+  --paper: #f3ead6;
+  --sheet: #fbf6ea;
+  --rule: #d4c4a4;
+  --ink: #1c1610;
+  --faint: #6d6254;
+  --navy: #2a3f63;
+  --navy-deep: #1c2c48;
+  --brick: #b1321f;
+  --ochre: #c48a2a;
+  --good: #2f6b45;
+  --warn: #8a3b16;
+}
+* { box-sizing: border-box }
+html, body { margin: 0; min-height: 100% }
+body {
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 500px at 10% -10%, #f7f0de, transparent 55%),
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(140, 100, 40, .05) 27px 28px),
+    repeating-linear-gradient(90deg, transparent 0 27px, rgba(140, 100, 40, .05) 27px 28px),
+    var(--paper);
+  font: 16px/1.45 "Liberation Serif", "DejaVu Serif", Georgia, "Palatino Linotype", Palatino, "Times New Roman", serif;
+}
+main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 22px 48px;
+}
+.masthead {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-end;
+  border-bottom: 3px double var(--ink);
+  padding-bottom: 14px;
+}
+.kicker {
+  margin: 0 0 4px;
+  color: var(--brick);
+  font: 700 12px/1 "Segoe UI", system-ui, sans-serif;
+}
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 2.7rem);
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+.lead {
+  max-width: 46rem;
+  margin: 8px 0 0;
+  color: var(--faint);
+}
+.stamp {
+  flex: 0 0 auto;
+  border: 1.5px solid var(--brick);
+  color: var(--brick);
+  padding: 8px 10px;
+  text-align: right;
+  font: 700 11px/1.35 "Segoe UI", system-ui, sans-serif;
+  transform: rotate(2deg);
+}
+.stamp span { display: block; font-weight: 600; opacity: .85 }
+
+form, .toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+}
+form {
+  margin: 22px 0 10px;
+  padding: 14px 14px 12px;
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  box-shadow: 3px 3px 0 rgba(28, 22, 16, .06);
+}
+label {
+  display: grid;
+  gap: 4px;
+  font: 12px/1 "Segoe UI", system-ui, sans-serif;
+  color: var(--faint);
+}
+input, button, select {
+  font: 15px/1.2 "Segoe UI", system-ui, sans-serif;
+  color: var(--ink);
+  background: #fffdf7;
+  border: 1px solid #b9a888;
+  border-radius: 2px;
+  padding: 7px 10px;
+}
+input { width: 84px }
+button { cursor: pointer }
+button:hover:not(:disabled) { background: #fff6e0 }
+button:disabled { opacity: .4; cursor: default }
+button.primary {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #f7f1e4;
+}
+button.primary:hover:not(:disabled) { background: var(--navy-deep) }
+button.ghost { background: transparent }
+#status {
+  min-height: 1.2em;
+  margin: 0 0 8px;
+  color: var(--brick);
+  font: 14px/1.4 "Segoe UI", system-ui, sans-serif;
+}
+#status:empty { display: none }
+
+.toolbar { margin: 8px 0 6px; align-items: center }
+#step-label { font-weight: 700; margin-left: 4px }
+#prob {
+  margin-left: auto;
+  font: 700 15px/1 "Segoe UI", system-ui, sans-serif;
+  color: var(--navy);
+  font-variant-numeric: tabular-nums;
+}
+.meter {
+  width: 160px;
+  height: 11px;
+  background: #e6d8bc;
+  border: 1px solid var(--rule);
+  overflow: hidden;
+}
+.meter > i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--brick);
+}
+
+.timeline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 8px 0 14px;
+}
+.timeline button {
+  min-width: 28px;
+  padding: 4px 7px;
+  font-size: 11px;
+  border-color: var(--rule);
+}
+.timeline button[aria-current="step"] {
+  background: var(--ink);
+  color: var(--sheet);
+  border-color: var(--ink);
+}
+.timeline button.oracle { border-bottom: 2px solid var(--brick) }
+.timeline button.diffusion { border-bottom: 2px solid var(--navy) }
+.timeline button.initial { border-bottom: 2px solid var(--ochre) }
+
+.plots {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: 16px;
+}
+figure {
+  margin: 0;
+  background: var(--sheet);
+  border: 1px solid var(--ink);
+  outline: 1px solid var(--rule);
+  outline-offset: -5px;
+  padding: 14px 14px 10px;
+}
+figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+  margin-bottom: 6px;
+  font: 700 15px/1.2 Georgia, serif;
+}
+figcaption small {
+  font: 12px/1.3 "Segoe UI", system-ui, sans-serif;
+  color: var(--faint);
+  font-weight: 500;
+}
+svg { display: block; width: 100%; height: auto }
+svg text { fill: var(--faint); font: 12px "Segoe UI", system-ui, sans-serif }
+.note {
+  margin: 6px 0 0;
+  color: var(--faint);
+  font: 12px/1.35 "Segoe UI", system-ui, sans-serif;
+}
+
+.explain {
+  display: grid;
+  grid-template-columns: 1.4fr .8fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+.explain > div {
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  padding: 12px 14px;
+}
+.explain h2 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+#explanation { margin: 0; color: var(--ink) }
+#sidebits { margin: 0; color: var(--faint); font: 14px/1.45 "Segoe UI", system-ui, sans-serif }
+#measure-out {
+  margin: 10px 0 0;
+  min-height: 1.3em;
+  font: 15px/1.4 "Segoe UI", system-ui, sans-serif;
+}
+#measure-out strong { color: var(--brick) }
+
+footer {
+  margin-top: 22px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+  color: var(--faint);
+  font: 12px/1.45 "Segoe UI", system-ui, sans-serif;
+}
+kbd {
+  font: 11px/1 ui-monospace, Consolas, monospace;
+  border: 1px solid var(--rule);
+  background: #fff;
+  padding: 1px 5px;
+}
+
+@media (max-width: 820px) {
+  .masthead, .plots, .explain { grid-template-columns: 1fr; display: grid }
+  .masthead { display: flex; flex-direction: column; align-items: flex-start }
+  #prob { margin-left: 0 }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important }
+}
 </style>
 </head>
 <body>
 <main>
-<header>
-  <div class="eyebrow">KVANTUMINFORMATIKAI ALKALMAZÁSOK / 3. FELADAT</div>
-  <h1>Grover-szimulátor</h1>
-  <p>Kövesd ugyanazt a kvantumállapotot az amplitúdók és a geometria nézetében.</p>
-</header>
-<form id="settings" novalidate>
-  <label>Qubitek<input id="qubits" type="number" min="1" max="8" value="2" required></label>
-  <label>Célindex<input id="target" type="number" min="0" max="3" value="2" required></label>
-  <label>Iterációk<input id="iterations" type="number" min="0" max="40" value="1" required></label>
-  <button id="suggest" type="button">Ajánlott iteráció</button>
-  <button class="primary" type="submit">Új futás</button>
-</form>
-<p id="status" role="alert"></p>
-<nav aria-label="Lépések">
-  <button id="previous" type="button">← Előző</button>
-  <button id="next" type="button">Következő →</button>
-  <span id="step" aria-live="polite"></span>
-  <span id="probability"></span>
-</nav>
-<div class="plots">
-  <section>
-    <h2>01 &nbsp; Valószínűségi amplitúdók</h2>
-    <small id="legend"></small>
-    <svg id="bars" viewBox="0 0 560 330" role="img" aria-label="Előjeles amplitúdók"></svg>
-    <small>Bázisállapot indexe · A fehér vonás az előző érték.</small>
-  </section>
-  <section>
-    <h2>02 &nbsp; Geometriai nézet</h2>
-    <small>x: nem célállapotok · y: célállapot</small>
-    <svg id="plane" viewBox="0 0 340 330" role="img" aria-label="Állapotvektor az egységkörön"></svg>
-    <small id="coordinates"></small>
-    <small> · Szaggatott nyíl: előző állapot.</small>
-  </section>
-</div>
-<p id="explanation"></p>
+  <header class="masthead">
+    <div>
+      <p class="kicker">Egy megjelölt állapot · Grover, 1997</p>
+      <h1>Grover-szimulátor</h1>
+      <p class="lead">
+        Az orákulum előjelet vált a keresett bázisállapotnál, a diffúzió pedig
+        az amplitúdók átlagára tükröz. A két ábra ugyanazt a lépést mutatja:
+        oszlopok a bázison, nyíl a Grover-síkon.
+      </p>
+    </div>
+    <div class="stamp">3. feladat<br><span>2026 ősz</span></div>
+  </header>
+
+  <form id="settings" novalidate>
+    <label>Qubitek, n<input id="qubits" type="number" min="1" max="8" value="2" required></label>
+    <label>Célindex<input id="target" type="number" min="0" max="3" value="2" required></label>
+    <label>Iterációk, k<input id="iterations" type="number" min="0" max="40" value="1" required></label>
+    <button id="suggest" type="button" title="k = ⌊π / (4θ)⌋, θ = arcsin(1/√N)">k ≈ π√N / 4</button>
+    <button class="primary" type="submit">Indítás</button>
+    <button id="measure" type="button">Mérés</button>
+  </form>
+  <p id="status" role="alert"></p>
+
+  <div class="toolbar">
+    <button id="previous" type="button">← Előző</button>
+    <button id="next" type="button">Következő →</button>
+    <button id="play" type="button" class="ghost">Lejátszás</button>
+    <span id="step-label"></span>
+    <span id="prob"></span>
+    <div class="meter" aria-hidden="true"><i id="meter-fill"></i></div>
+  </div>
+  <div id="timeline" class="timeline" role="tablist" aria-label="Lépések"></div>
+
+  <div class="plots">
+    <figure>
+      <figcaption>
+        Amplitúdók
+        <small id="legend"></small>
+      </figcaption>
+      <svg id="bars" viewBox="0 0 560 330" role="img" aria-label="Előjeles amplitúdók"></svg>
+      <p class="note" id="bar-note">A vékony vízszintes vonal az előző érték. A pontozott vonal az átlag.</p>
+    </figure>
+    <figure>
+      <figcaption>
+        Grover-sík
+        <small>x: kiegyenlített nem-cél · y: |w⟩</small>
+      </figcaption>
+      <svg id="plane" viewBox="0 0 340 330" role="img" aria-label="Állapotvektor az egységkörön"></svg>
+      <p class="note" id="plane-note"></p>
+    </figure>
+  </div>
+
+  <div class="explain">
+    <div>
+      <h2 id="explain-title">Mi történt</h2>
+      <p id="explanation"></p>
+      <p id="measure-out"></p>
+    </div>
+    <div>
+      <h2>Ehhez a futáshoz</h2>
+      <p id="sidebits"></p>
+    </div>
+  </div>
+
+  <footer>
+    Billentyűk: bal/jobb nyilak lépéshez, szóköz a lejátszáshoz.
+    A keresett állapot piros, a többi kék. Túl sok iteráció után a valószínűség visszaesik.
+  </footer>
 </main>
 <script>
 "use strict";
 const datasets = __GROVER_DATA__;
-const labels = {
-  initial: ["Szuperpozíció", "Minden bázisállapot azonos amplitúdóról indul."],
-  oracle: ["Orákulum", "A cél amplitúdója előjelet vált. A mérési valószínűségek változatlanok."],
-  diffusion: ["Diffúzió", "Minden amplitúdó tükröződik az orákulum utáni amplitúdók átlaga körül."]
+const copy = {
+  initial: [
+    "Egyenletes szuperpozíció",
+    "Hadamardok után minden bázisállapot ugyanarról az 1/√N amplitúdóról indul. A cél esélye még csak 1/N — ez az a pont, ahonnan a forgatás fölfelé visz."
+  ],
+  oracle: [
+    "Orákulum",
+    "A megjelölt amplitúdó előjelet vált, a többi helyben marad. A mérési valószínűségek nem változnak: csak a fázis billen, ettől lesz a cél kilógó az átlaghoz képest."
+  ],
+  diffusion: [
+    "Diffúzió",
+    "Minden amplitúdó tükröződik az aktuális átlagra. A cél, ami most az átlag alatt van, nagyot ugrik fölfelé; a többi kicsit lejjebb megy. Ez a Grover-síkon 2θ-s forgás."
+  ]
 };
-const byId = id => document.getElementById(id);
-const qubits = byId("qubits");
-const target = byId("target");
-const iterations = byId("iterations");
-const status = byId("status");
-const previous = byId("previous");
-const next = byId("next");
-let history, size, marked, position;
+const $ = id => document.getElementById(id);
+const qubits = $("qubits");
+const target = $("target");
+const iterations = $("iterations");
+const status = $("status");
+let history, size, nQubits, marked, position, playing = null, sample = null;
+
+function ket(index) {
+  return "|" + index.toString(2).padStart(nQubits, "0") + "⟩";
+}
+
+function recommended(n) {
+  return datasets[n] && datasets[n].recommended;
+}
 
 function run() {
   const n = qubits.valueAsNumber;
   const index = target.valueAsNumber;
   const count = iterations.valueAsNumber;
   if (!Number.isInteger(n) || n < 1 || n > 8) {
-    status.textContent = "A qubitek száma 1 és 8 közötti egész legyen.";
+    status.textContent = "n legyen 1 és 8 közötti egész.";
     return;
   }
   const nextSize = 2 ** n;
   if (!Number.isInteger(index) || index < 0 || index >= nextSize) {
-    status.textContent = "A célindex 0 és " + (nextSize - 1) + " közötti egész legyen.";
+    status.textContent = "A célindex 0 és " + (nextSize - 1) + " közé essen.";
     return;
   }
   if (!Number.isInteger(count) || count < 0 || count > 40) {
-    status.textContent = "Az iterációk száma 0 és 40 közötti egész legyen.";
+    status.textContent = "k legyen 0 és 40 közötti egész.";
     return;
   }
+  nQubits = n;
   size = nextSize;
   marked = index;
   history = datasets[n].steps.slice(0, 2 * count + 1);
   position = 0;
+  sample = null;
   status.textContent = "";
+  $("measure-out").textContent = "";
+  buildTimeline();
   draw();
+}
+
+function stopPlay() {
+  if (playing) {
+    clearInterval(playing);
+    playing = null;
+    $("play").textContent = "Lejátszás";
+  }
 }
 
 function move(delta) {
-  position = Math.max(0, Math.min(position + delta, history.length - 1));
+  const nextPos = Math.max(0, Math.min(position + delta, history.length - 1));
+  if (nextPos === position) {
+    if (delta > 0) stopPlay();
+    return;
+  }
+  position = nextPos;
+  sample = null;
+  $("measure-out").textContent = "";
   draw();
 }
 
-function svgElement(parent, name, attributes, label) {
-  const element = document.createElementNS("http://www.w3.org/2000/svg", name);
-  for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, value);
-  if (label !== undefined) element.textContent = label;
-  parent.append(element);
-  return element;
+function svgEl(parent, name, attrs, label) {
+  const el = document.createElementNS("http://www.w3.org/2000/svg", name);
+  for (const [key, value] of Object.entries(attrs)) el.setAttribute(key, value);
+  if (label !== undefined) el.textContent = label;
+  parent.append(el);
+  return el;
 }
 
-function line(svg, x1, y1, x2, y2, stroke, options = {}) {
-  return svgElement(svg, "line", {x1, y1, x2, y2, stroke, ...options});
+function line(svg, x1, y1, x2, y2, stroke, extra = {}) {
+  return svgEl(svg, "line", {x1, y1, x2, y2, stroke, ...extra});
 }
 
-function text(svg, x, y, label, anchor = "middle") {
-  svgElement(svg, "text", {x, y, "text-anchor": anchor, "dominant-baseline": "middle"}, label);
+function text(svg, x, y, label, anchor = "middle", fill) {
+  const attrs = {x, y, "text-anchor": anchor, "dominant-baseline": "middle"};
+  if (fill) attrs.fill = fill;
+  svgEl(svg, "text", attrs, label);
+}
+
+function amp(step, i) {
+  return i === marked ? step[3] : step[2];
+}
+
+function meanOf(step) {
+  return ((size - 1) * step[2] + step[3]) / size;
 }
 
 function drawBars(step, prior) {
-  const svg = byId("bars");
+  const svg = $("bars");
   svg.replaceChildren();
-  const midpoint = 152;
-  const scale = 123;
-  const left = 43;
-  const cell = 500 / size;
-  for (const tick of [-1, -.5, 0, .5, 1]) {
-    const y = midpoint - scale * tick;
-    line(svg, left, y, 543, y, tick === 0 ? "var(--muted)" : "var(--grid)");
-    text(svg, left - 7, y, tick, "end");
+  const defs = svgEl(svg, "defs", {});
+  const pat = svgEl(defs, "pattern", {
+    id: "gp", width: 14, height: 14, patternUnits: "userSpaceOnUse"
+  });
+  svgEl(pat, "path", {d: "M 14 0 L 0 0 0 14", fill: "none", stroke: "#e4d5b6", "stroke-width": 1});
+  svgEl(svg, "rect", {x: 0, y: 0, width: 560, height: 330, fill: "url(#gp)"});
+
+  const mid = 152, scale = 118, left = 46, right = 544;
+  for (const tick of [-1, -0.5, 0, 0.5, 1]) {
+    const y = mid - scale * tick;
+    line(svg, left, y, right, y, tick === 0 ? "#1c1610" : "#d8c7a6");
+    text(svg, left - 8, y, String(tick).replace(".", ","), "end");
   }
-  const barWidth = Math.min(52, cell * .72);
-  const stride = Math.max(1, Math.ceil(28 / cell));
+
+  const mu = meanOf(step);
+  const my = mid - scale * mu;
+  line(svg, left, my, right, my, "#8a3b16", {"stroke-dasharray": "3 4", "stroke-width": 1.4});
+
+  const cell = (right - left) / size;
+  const barW = Math.min(46, cell * 0.62);
+  const stride = Math.max(1, Math.ceil(26 / cell));
   for (let i = 0; i < size; i++) {
-    const center = left + (i + .5) * cell;
-    const amplitudeIndex = i === marked ? 3 : 2;
-    const value = step[amplitudeIndex];
-    const y = midpoint - scale * value;
-    const bar = svgElement(svg, "rect", {
-      x: center - barWidth / 2, y: Math.min(midpoint, y), width: barWidth,
-      height: Math.max(1, Math.abs(y - midpoint)), fill: i === marked ? "var(--gold)" : "var(--blue)"
+    const cx = left + (i + 0.5) * cell;
+    const value = amp(step, i);
+    const y = mid - scale * value;
+    const targetBar = i === marked;
+    const bar = svgEl(svg, "rect", {
+      x: cx - barW / 2,
+      y: Math.min(mid, y),
+      width: barW,
+      height: Math.max(1.4, Math.abs(y - mid)),
+      fill: targetBar ? "#b1321f" : "#2a3f63",
+      opacity: sample !== null && sample !== i ? 0.22 : 1
     });
-    svgElement(bar, "title", {}, "|" + i + "⟩: " + value.toFixed(6));
+    svgEl(bar, "title", {}, ket(i) + "  amp=" + value.toFixed(4) + "  P=" + (value * value * 100).toFixed(2) + "%");
     if (prior) {
-      const oldY = midpoint - scale * prior[amplitudeIndex];
-      line(svg, center - barWidth / 2, oldY, center + barWidth / 2, oldY, "var(--ink)");
+      const oldY = mid - scale * amp(prior, i);
+      line(svg, cx - barW / 2, oldY, cx + barW / 2, oldY, "#1c1610", {"stroke-width": 1.5});
     }
-    if (i % stride === 0) text(svg, center, 299, i);
+    if (i % stride === 0) {
+      const label = nQubits <= 4 ? ket(i) : String(i);
+      text(svg, cx, 304, label);
+    }
   }
 }
 
+function arrow(svg, x1, y1, x2, y2, color, width, dash) {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  line(svg, x1, y1, x2, y2, color, {"stroke-width": width, "stroke-dasharray": dash});
+  const pts = [[x2, y2], ...[-0.42, 0.42].map(off => [
+    x2 - 12 * Math.cos(angle + off),
+    y2 - 12 * Math.sin(angle + off)
+  ])];
+  svgEl(svg, "polygon", {points: pts.map(p => p.join(",")).join(" "), fill: color});
+}
+
 function drawPlane(step, prior) {
-  const svg = byId("plane");
+  const svg = $("plane");
   svg.replaceChildren();
-  const cx = 170, cy = 152, radius = 122;
-  svgElement(svg, "circle", {cx, cy, r: radius, fill: "none", stroke: "var(--grid)", "stroke-width": 2});
-  line(svg, 36, cy, 304, cy, "var(--muted)");
-  line(svg, cx, 18, cx, 286, "var(--muted)");
-  text(svg, 315, cy, "x");
-  text(svg, cx + 9, 18, "y");
-  function vector(snapshot, color, width, dash) {
-    const x = cx + radius * snapshot[4];
-    const y = cy - radius * snapshot[5];
-    const angle = Math.atan2(y - cy, x - cx);
-    line(svg, cx, cy, x, y, color, {"stroke-width": width, "stroke-dasharray": dash});
-    const points = [[x, y], ...[-.45, .45].map(offset =>
-      [x - 13 * Math.cos(angle + offset), y - 13 * Math.sin(angle + offset)])];
-    svgElement(svg, "polygon", {points: points.map(point => point.join(",")).join(" "), fill: color});
+  const cx = 170, cy = 158, r = 112;
+  svgEl(svg, "circle", {cx, cy, r, fill: "#fbf6ea", stroke: "#d4c4a4", "stroke-width": 1.5});
+  for (const t of [0.25, 0.5, 0.75]) {
+    svgEl(svg, "circle", {cx, cy, r: r * t, fill: "none", stroke: "#ead9b8"});
   }
-  if (prior) vector(prior, "var(--muted)", 2, "5 4");
-  vector(step, "var(--mint)", 3, "none");
-  byId("coordinates").textContent = "x = " + step[4].toFixed(4) + " · y = " + step[5].toFixed(4);
+  line(svg, cx - r - 10, cy, cx + r + 16, cy, "#6d6254");
+  line(svg, cx, cy + r + 10, cx, cy - r - 16, "#6d6254");
+  text(svg, cx + r + 24, cy + 1, "|s′⟩", "start", "#6d6254");
+  text(svg, cx + 14, cy - r - 12, "|w⟩", "start", "#b1321f");
+
+  const theta0 = Math.asin(1 / Math.sqrt(size));
+  arrow(svg, cx, cy, cx + r * Math.cos(theta0), cy - r * Math.sin(theta0), "#c48a2a", 1.4, "4 4");
+
+  if (prior) {
+    arrow(svg, cx, cy, cx + r * prior[4], cy - r * prior[5], "#b7a88c", 2, "5 4");
+  }
+  arrow(svg, cx, cy, cx + r * step[4], cy - r * step[5], "#2f6b45", 2.6, "none");
+
+  const ang = Math.atan2(step[5], step[4]);
+  const deg = ang * 180 / Math.PI;
+  $("plane-note").textContent =
+    "x = " + step[4].toFixed(4) + " · y = " + step[5].toFixed(4) +
+    " · ∠ = " + deg.toFixed(1).replace(".", ",") + "°  (kezdeti θ = " +
+    (theta0 * 180 / Math.PI).toFixed(1).replace(".", ",") + "°, okker szaggatott)";
+}
+
+function buildTimeline() {
+  const box = $("timeline");
+  box.replaceChildren();
+  history.forEach((step, i) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = step[0];
+    btn.textContent = i === 0 ? "H" : (step[0] === "oracle" ? "O" + step[1] : "D" + step[1]);
+    btn.title = copy[step[0]][0];
+    btn.addEventListener("click", () => {
+      stopPlay();
+      position = i;
+      sample = null;
+      $("measure-out").textContent = "";
+      draw();
+    });
+    box.append(btn);
+  });
 }
 
 function draw() {
   const step = history[position];
   const prior = history[position - 1];
-  const [name, description] = labels[step[0]];
-  byId("step").textContent = (position + 1) + "/" + history.length + "  " + name +
-    (step[1] ? " · " + step[1] + ". iteráció" : "");
-  byId("probability").textContent = "P(cél) = " + (100 * step[3] ** 2).toFixed(2) + "%";
-  byId("explanation").textContent = description;
-  byId("legend").textContent = "N = " + size + " · Arany: cél |" + marked + "⟩";
-  previous.disabled = position === 0;
-  next.disabled = position === history.length - 1;
+  const [title, body] = copy[step[0]];
+  const p = step[3] * step[3];
+  const rec = recommended(nQubits);
+  $("explain-title").textContent = title;
+  $("step-label").textContent = (position + 1) + " / " + history.length +
+    (step[1] ? " · " + step[1] + ". kör" : "");
+  $("prob").textContent = "P(" + ket(marked) + ") = " + (100 * p).toFixed(2).replace(".", ",") + "%";
+  $("meter-fill").style.width = (100 * p) + "%";
+  $("explanation").textContent = body;
+  $("legend").textContent = "N = " + size + " · piros: " + ket(marked) + " (index " + marked + ")";
+  $("previous").disabled = position === 0;
+  $("next").disabled = position === history.length - 1;
+  [...$("timeline").children].forEach((btn, i) => {
+    if (i === position) btn.setAttribute("aria-current", "step");
+    else btn.removeAttribute("aria-current");
+  });
+
+  const extra = [];
+  extra.push("θ = arcsin(1/√N) = " + (Math.asin(1 / Math.sqrt(size)) * 180 / Math.PI).toFixed(2).replace(".", ",") + "°");
+  extra.push("ajánlott k = " + rec + (Number(iterations.value) === rec ? " (ezt futtatod)" : ", most k = " + iterations.value));
+  if (Number(iterations.value) > rec) {
+    extra.push("k nagyobb az ajánlottnál: a cél valószínűsége a tetőzés után csökken.");
+  }
+  extra.push("átlagos amplitúdó most: " + meanOf(step).toFixed(4));
+  $("sidebits").textContent = extra.join(" · ");
+
   drawBars(step, prior);
   drawPlane(step, prior);
 }
 
-byId("settings").addEventListener("submit", event => { event.preventDefault(); run(); });
+function measure() {
+  if (!history) return;
+  const step = history[position];
+  const pMark = step[3] * step[3];
+  const r = Math.random();
+  let outcome;
+  if (r < pMark) outcome = marked;
+  else {
+    const unmarked = [...Array(size).keys()].filter(i => i !== marked);
+    outcome = unmarked[Math.floor((r - pMark) / ((1 - pMark) / (size - 1)))];
+    if (outcome === undefined) outcome = unmarked[unmarked.length - 1];
+  }
+  sample = outcome;
+  const p = (outcome === marked ? pMark : (1 - pMark) / (size - 1));
+  $("measure-out").innerHTML = "Mérés eredménye: <strong>" + ket(outcome) +
+    "</strong>  (ehhez az állapothoz most P = " + (100 * p).toFixed(2).replace(".", ",") + "%).";
+  draw();
+}
+
+$("settings").addEventListener("submit", event => {
+  event.preventDefault();
+  stopPlay();
+  run();
+});
 qubits.addEventListener("input", () => {
   const n = qubits.valueAsNumber;
   if (datasets[n]) target.max = 2 ** n - 1;
 });
-byId("suggest").addEventListener("click", () => {
+$("suggest").addEventListener("click", () => {
   const data = datasets[qubits.valueAsNumber];
   if (data) {
     iterations.value = data.recommended;
     status.textContent = "";
   } else {
-    status.textContent = "Az ajánláshoz 1 és 8 közötti qubitszámot adj meg.";
+    status.textContent = "Az ajánláshoz n legyen 1…8.";
   }
 });
-previous.addEventListener("click", () => move(-1));
-next.addEventListener("click", () => move(1));
+$("previous").addEventListener("click", () => { stopPlay(); move(-1); });
+$("next").addEventListener("click", () => { stopPlay(); move(1); });
+$("measure").addEventListener("click", () => { stopPlay(); measure(); });
+$("play").addEventListener("click", () => {
+  if (playing) {
+    stopPlay();
+    return;
+  }
+  if (position === history.length - 1) position = -1;
+  $("play").textContent = "Megállít";
+  move(1);
+  playing = setInterval(() => move(1), 850);
+});
 document.addEventListener("keydown", event => {
   if (event.target instanceof HTMLInputElement) return;
-  if (event.key === "ArrowLeft") move(-1);
-  if (event.key === "ArrowRight") move(1);
+  if (event.key === "ArrowLeft") { stopPlay(); move(-1); }
+  if (event.key === "ArrowRight") { stopPlay(); move(1); }
+  if (event.key === " ") {
+    event.preventDefault();
+    $("play").click();
+  }
 });
 run();
 </script>

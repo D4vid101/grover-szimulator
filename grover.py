@@ -23,6 +23,10 @@ class Step:
     def probability(self) -> float:
         return self.amplitudes[self.target] ** 2
 
+    @property
+    def mean(self) -> float:
+        return fsum(self.amplitudes) / len(self.amplitudes)
+
 
 def optimal_iterations(size: int) -> int:
     theta = asin(1 / sqrt(size))
