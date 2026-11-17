@@ -8,15 +8,15 @@ from tkinter import ttk
 from grover import optimal_iterations, simulate
 
 
-PAPER = "#f3ead6"
-SHEET = "#fbf6ea"
-INK = "#1c1610"
-FAINT = "#6d6254"
-NAVY = "#2a3f63"
-BRICK = "#b1321f"
-OCHRE = "#c48a2a"
-GOOD = "#2f6b45"
-RULE = "#d4c4a4"
+PAPER = "#e9eef4"
+SHEET = "#fffcf8"
+INK = "#1b2430"
+FAINT = "#5b6776"
+NAVY = "#2c5289"
+BRICK = "#c23a2b"
+OCHRE = "#c3922a"
+GOOD = "#1d7a58"
+RULE = "#d5dde6"
 
 COPY = {
     "initial": (
@@ -54,17 +54,15 @@ class GroverApp:
         style = ttk.Style(root)
         style.theme_use("clam")
         style.configure("TButton", padding=(10, 5), background=SHEET)
-        style.configure("Accent.TButton", background=NAVY, foreground="#f7f1e4")
-        style.map("Accent.TButton", background=[("active", "#1c2c48")])
+        style.configure("Accent.TButton", background=NAVY, foreground="#f7f9fc")
+        style.map("Accent.TButton", background=[("active", "#1e3b66")])
 
         header = tk.Frame(root, bg=PAPER, padx=22, pady=12)
         header.pack(fill="x")
-        self.label(header, "Egy megjelölt állapot  ·  Grover, 1997", BRICK, 9, True).pack(anchor="w")
-        self.label(header, "Grover-szimulátor", INK, 24, True).pack(anchor="w")
-        self.label(
-            header,
-            "Az orákulum előjelet vált, a diffúzió az átlagra tükröz. A két ábra ugyanazt a lépést mutatja.",
-        ).pack(anchor="w")
+        tk.Label(
+            header, text="Grover-szimulátor", fg=INK, bg=PAPER, anchor="center",
+            font=("Noto Serif", 34, "bold"),
+        ).pack(fill="x")
 
         inputs = tk.Frame(root, bg=PAPER, padx=22)
         inputs.pack(fill="x")
@@ -132,7 +130,7 @@ class GroverApp:
             fg=color,
             bg=PAPER,
             anchor="w",
-            font=("Georgia", size, "bold" if bold else "normal"),
+            font=("Noto Sans", size, "bold" if bold else "normal"),
         )
 
     def suggest(self):
@@ -268,7 +266,7 @@ class GroverApp:
     def plot_text(canvas, x, y, value, color=FAINT, anchor="center", size=9, bold=False):
         canvas.create_text(
             x, y, text=value, fill=color, anchor=anchor,
-            font=("Georgia", size, "bold" if bold else "normal"),
+            font=("Noto Sans", size, "bold" if bold else "normal"),
         )
 
     def draw_bars(self, step, previous):
