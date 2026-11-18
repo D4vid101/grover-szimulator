@@ -2,7 +2,7 @@
 
 A Kvantuminformatikai alkalmazások tantárgy 2026. őszi házi feladatának beadása (3. feladat).
 
-Szélyes Dávid és [tamas722](https://github.com/tamas722)
+Szélyes Dávid (MTZY28) és [Varga Tamás](https://github.com/tamas722) (CYNXF8)
 
 A program a Grover-algoritmus egyetlen megjelölt állapotra vonatkozó esetét mutatja be. Ugyanazt az állapotot látjuk az előjeles amplitúdódiagramon és a geometriai ábrán. Egy kattintással külön követhető az orákulum és a diffúzió.
 
