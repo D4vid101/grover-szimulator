@@ -273,7 +273,7 @@ const datasets = __GROVER_DATA__;
 const copy = {
   initial: [
     "Egyenletes szuperpozíció",
-    "Hadamardok után minden bázisállapot ugyanarról az 1/√N amplitúdóról indul. A cél esélye még csak 1/N — ez az a pont, ahonnan a forgatás fölfelé visz."
+    "Hadamardok után minden bázisállapot 1/√N amplitúdóról indul. A cél mérési valószínűsége 1/N."
   ],
   oracle: [
     "Orákulum",
@@ -281,7 +281,7 @@ const copy = {
   ],
   diffusion: [
     "Diffúzió",
-    "Minden amplitúdó tükröződik az aktuális átlagra. A cél, ami most az átlag alatt van, nagyot ugrik fölfelé; a többi kicsit lejjebb megy. Ez a Grover-síkon 2θ-s forgás."
+    "Minden amplitúdó tükröződik az orákulum utáni m átlagra: a → 2m − a. A diffúzió a Grover-síkon a kezdőállapot irányára tükröz. Az orákulum és a diffúzió együtt 2θ-val forgatja az állapotot; a cél valószínűsége a csúcs után csökkenhet."
   ]
 };
 const $ = id => document.getElementById(id);
@@ -505,8 +505,8 @@ function draw() {
 
   const extra = [];
   extra.push("θ = arcsin(1/√N) = " + (Math.asin(1 / Math.sqrt(size)) * 180 / Math.PI).toFixed(2).replace(".", ",") + "°");
-  extra.push("ajánlott k = " + rec + (Number(iterations.value) === rec ? " (ezt futtatod)" : ", most k = " + iterations.value));
-  if (Number(iterations.value) > rec) {
+  extra.push("ajánlott k = " + rec + ((history.length - 1) / 2 === rec ? " (ezt futtatod)" : ", most k = " + (history.length - 1) / 2));
+  if ((history.length - 1) / 2 > rec) {
     extra.push("k nagyobb az ajánlottnál: a cél valószínűsége a tetőzés után csökken.");
   }
   extra.push("átlagos amplitúdó most: " + meanOf(step).toFixed(4));
