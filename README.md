@@ -8,7 +8,7 @@ A program a Grover-algoritmus egyetlen megjelölt állapotra vonatkozó esetét 
 
 ## Futtatás
 
-- Windows: töltsd le a [legfrissebb beadási ZIP-et](../../releases/latest), csomagold ki, és nyisd meg a `GroverSzimulator.html` fájlt a böngészőben. A fájl önállóan, internetkapcsolat és telepítés nélkül fut.
+- Windows: töltsd le a [végleges beadási ZIP-et](Grover-beadando.zip), csomagold ki, és nyisd meg a `GroverSzimulator.html` fájlt a böngészőben. A fájl önállóan, internetkapcsolat és telepítés nélkül fut.
 - Linux: a kicsomagolt mappában futtasd az `xdg-open GroverSzimulator.html` parancsot. Ez az alapértelmezett böngészőben nyitja meg a fájlt. Ha az `xdg-open` nincs telepítve, a `xdg-utils` csomag adja. Debianon: `sudo apt install xdg-utils`. Fedorán: `sudo dnf install xdg-utils`.
 - A böngészős változat újraépítése: Python 3.10+ alatt futtasd a `python build_browser.py` parancsot. A program a `grover.py` eredményeit beépíti a `browser-template.html` sablonba.
 - Asztali fejlesztői nézet: Python 3.10+ és Tk szükséges. A projekt gyökérmappájában futtasd: `python app.py`.
@@ -17,4 +17,6 @@ A program a Grover-algoritmus egyetlen megjelölt állapotra vonatkozó esetét 
 
 Az alapbeállítás két qubitet, a 2-es célindexet és egy iterációt használ. Nyomd meg kétszer a **Következő** gombot. Először a cél amplitúdója +0,5-ről −0,5-re vált, a cél mérési valószínűsége 25% marad. A második lépésben a cél amplitúdója +1 lesz, a többié 0, így a cél mérési valószínűsége 100%. Az **Előző** gombbal visszanézhető bármely lépés.
 
-A részletes használat, a számítás és az ellenőrzés leírása a [dokumentációban](docs/Grover-dokumentacio.pdf) található. A matematikai háttér forrása [Grover eredeti cikke](https://doi.org/10.1103/PhysRevLett.79.325). A tavalyi, megosztott megoldást a felület és a feladat értelmezéséhez néztük át. A Python-kód önálló implementáció. A megvalósításhoz és a dokumentációhoz AI-asszisztenst használtunk.
+A részletes használat, a számítás és az ellenőrzés leírása a [dokumentációban](docs/Grover-dokumentacio.pdf) található. A matematikai háttér forrása [Grover eredeti cikke](https://doi.org/10.1103/PhysRevLett.79.325).
+
+A kód és a dokumentáció elkészítéséhez AI-asszisztenst használtunk.
