@@ -9,6 +9,7 @@ A program a Grover-algoritmus egyetlen megjelölt állapotra vonatkozó esetét 
 ## Futtatás
 
 - Windows: töltsd le a [legfrissebb beadási ZIP-et](../../releases/latest), csomagold ki, és nyisd meg a `GroverSzimulator.html` fájlt a böngészőben. A fájl önállóan, internetkapcsolat és telepítés nélkül fut.
+- Linux: a kicsomagolt mappában futtasd az `xdg-open GroverSzimulator.html` parancsot. Ez az alapértelmezett böngészőben nyitja meg a fájlt. Ha az `xdg-open` nincs telepítve, a `xdg-utils` csomag adja. Debianon: `sudo apt install xdg-utils`. Fedorán: `sudo dnf install xdg-utils`.
 - A böngészős változat újraépítése: Python 3.10+ alatt futtasd a `python build_browser.py` parancsot. A program a `grover.py` eredményeit beépíti a `browser-template.html` sablonba.
 - Asztali fejlesztői nézet: Python 3.10+ és Tk szükséges. A projekt gyökérmappájában futtasd: `python app.py`.
 
