@@ -29,7 +29,7 @@ COPY = {
     ),
     "diffusion": (
         "Diffúzió",
-        "Minden amplitúdó tükröződik az átlagra. A cél nagyot ugrik fölfelé; ez a síkon 2θ-s forgás.",
+        "A diffúzió a kezdőállapot irányára tükröz. Az orákulummal együtt 2θ-val forgatja az állapotot; a cél esélye csökkenhet is.",
     ),
 }
 
@@ -105,7 +105,7 @@ class GroverApp:
         for canvas in (self.bars, self.plane):
             canvas.bind("<Configure>", lambda event: self.draw())
 
-        foot = tk.Frame(root, bg=PAPER, padx=22, pady=(8, 12))
+        foot = tk.Frame(root, bg=PAPER, padx=22, pady=8)
         foot.pack(fill="x")
         self.explanation = self.label(foot, "", INK, 10)
         self.explanation.pack(fill="x")
@@ -119,7 +119,7 @@ class GroverApp:
         self.run()
 
     def ket(self, index):
-        qubits = int(self.qubits.get() or 2)
+        qubits = (len(self.history[0].amplitudes) - 1).bit_length()
         return f"|{index:0{qubits}b}⟩"
 
     @staticmethod
@@ -197,7 +197,10 @@ class GroverApp:
             self.position = -1
         self.play.config(text="Megállít")
         self.move(1)
-        self.playing = self.root.after(850, self._play_tick)
+        if self.position < len(self.history) - 1:
+            self.playing = self.root.after(850, self._play_tick)
+        else:
+            self.stop_play()
 
     def _play_tick(self):
         self.playing = None
@@ -208,6 +211,8 @@ class GroverApp:
         if self.position < len(self.history) - 1:
             self.play.config(text="Megállít")
             self.playing = self.root.after(850, self._play_tick)
+        else:
+            self.stop_play()
 
     def stop_play(self):
         if self.playing:
@@ -244,9 +249,11 @@ class GroverApp:
         self.metrics.config(text=f"P({self.ket(step.target)}) = {step.probability:.2%}")
         self.explanation.config(text=description)
         rec = optimal_iterations(len(step.amplitudes))
-        k = int(self.iterations.get() or rec)
+        k = (len(self.history) - 1) // 2
         extra = f"θ = {math.degrees(math.asin(1 / math.sqrt(len(step.amplitudes)))):.2f}°  ·  ajánlott k = {rec}"
-        if k > rec:
+        if len(step.amplitudes) == 2:
+            extra += "  ·  Egy qubitnél a cél esélye minden iteráció után 50%."
+        elif k > rec:
             extra += "  ·  k nagyobb az ajánlottnál, a tetőzés után a valószínűség csökken."
         extra += f"  ·  átlag = {step.mean:.4f}"
         self.side.config(text=extra)

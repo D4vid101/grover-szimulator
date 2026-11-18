@@ -346,6 +346,7 @@ function move(delta) {
   sample = null;
   $("measure-out").textContent = "";
   draw();
+  if (position === history.length - 1) stopPlay();
 }
 
 function svgEl(parent, name, attrs, label) {
@@ -397,7 +398,7 @@ function drawBars(step, prior) {
 
   const cell = (right - left) / size;
   const barW = Math.min(46, cell * 0.62);
-  const stride = Math.max(1, Math.ceil(26 / cell));
+  const stride = Math.max(1, Math.ceil((nQubits <= 4 ? 60 : 26) / cell));
   for (let i = 0; i < size; i++) {
     const cx = left + (i + 0.5) * cell;
     const value = amp(step, i);
@@ -412,7 +413,7 @@ function drawBars(step, prior) {
       rx: 2,
       opacity: sample !== null && sample !== i ? 0.22 : 1
     });
-    svgEl(bar, "title", {}, ket(i) + "  amp=" + value.toFixed(4) + "  P=" + (value * value * 100).toFixed(2) + "%");
+    svgEl(bar, "title", {}, ket(i) + "  amp=" + value.toFixed(4).replace(".", ",") + "  P=" + (value * value * 100).toFixed(2).replace(".", ",") + "%");
     if (prior) {
       const oldY = mid - scale * amp(prior, i);
       line(svg, cx - barW / 2, oldY, cx + barW / 2, oldY, "var(--ink)", {"stroke-width": 1.5});
@@ -448,7 +449,7 @@ function drawPlane(step, prior) {
   text(svg, cx + 14, cy - r - 12, "|w⟩", "start", "var(--brick)");
 
   const theta0 = Math.asin(1 / Math.sqrt(size));
-  arrow(svg, cx, cy, cx + r * Math.cos(theta0), cy - r * Math.sin(theta0), "var(--ochre)", 1.4, "4 4");
+  arrow(svg, cx, cy, cx + (r + 7) * Math.cos(theta0), cy - (r + 7) * Math.sin(theta0), "var(--ochre)", 1.4, "4 4");
 
   if (prior) {
     arrow(svg, cx, cy, cx + r * prior[4], cy - r * prior[5], "#9aa7b6", 2, "5 4");
@@ -458,7 +459,7 @@ function drawPlane(step, prior) {
   const ang = Math.atan2(step[5], step[4]);
   const deg = ang * 180 / Math.PI;
   $("plane-note").textContent =
-    "x = " + step[4].toFixed(4) + " · y = " + step[5].toFixed(4) +
+    "x = " + step[4].toFixed(4).replace(".", ",") + " · y = " + step[5].toFixed(4).replace(".", ",") +
     " · ∠ = " + deg.toFixed(1).replace(".", ",") + "°  (kezdeti θ = " +
     (theta0 * 180 / Math.PI).toFixed(1).replace(".", ",") + "°, okker szaggatott)";
 }
@@ -506,10 +507,12 @@ function draw() {
   const extra = [];
   extra.push("θ = arcsin(1/√N) = " + (Math.asin(1 / Math.sqrt(size)) * 180 / Math.PI).toFixed(2).replace(".", ",") + "°");
   extra.push("ajánlott k = " + rec + ((history.length - 1) / 2 === rec ? " (ezt futtatod)" : ", most k = " + (history.length - 1) / 2));
-  if ((history.length - 1) / 2 > rec) {
+  if (size === 2) {
+    extra.push("Egy qubitnél a cél esélye minden iteráció után 50%.");
+  } else if ((history.length - 1) / 2 > rec) {
     extra.push("k nagyobb az ajánlottnál: a cél valószínűsége a tetőzés után csökken.");
   }
-  extra.push("átlagos amplitúdó most: " + meanOf(step).toFixed(4));
+  extra.push("átlagos amplitúdó most: " + meanOf(step).toFixed(4).replace(".", ","));
   $("sidebits").textContent = extra.join(" · ");
 
   drawBars(step, prior);
@@ -564,7 +567,8 @@ $("play").addEventListener("click", () => {
   if (position === history.length - 1) position = -1;
   $("play").textContent = "Megállít";
   move(1);
-  playing = setInterval(() => move(1), 850);
+  if (position < history.length - 1) playing = setInterval(() => move(1), 850);
+  else stopPlay();
 });
 document.addEventListener("keydown", event => {
   if (event.target instanceof HTMLInputElement) return;
